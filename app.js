@@ -1,4 +1,3 @@
-
 const express = require('express')
 const fs = require('fs')
 const app = express()
@@ -25,7 +24,9 @@ asyncReadFile =function(path)
                 resolve(data)
             })
         }
-        )
+        ).catch(err=>{
+            return err
+        })
     }
 const asyncWriteFile =function (string,path){
     return new Promise(function(resolve,reject){
@@ -57,6 +58,38 @@ const createAccount = async (req,res) =>{
 }
 
 app.post('/accounts', createAccount)
+app.delete('/del/:id',async (req,res)=>{
+    // console.log(req.params.id)
+    // console.log(req)
+    const file = await asyncReadFile('./data.json') 
+    const account = JSON.parse(file)
+    if(account.filter(v=>v.id==req.params.id).length!=0){
+        for(var i=0;i<account.length;i++){
+            if(account[i].id==req.params.id){
+                account.splice(i,1)
+            }
+        }
+        await asyncWriteFile(JSON.stringify(account),'./data.json')
+        res.status(201).send(account)
+    }else{
+        res.send('未找到指定id')
+    }
+    
+})
+app.get('/getid/:id',async (req,res)=>{
+    const file = await asyncReadFile('./data.json') 
+    const account = JSON.parse(file)
+    if(account.filter(v=>v.id==req.params.id).length!=0){
+        for(var i=0;i<account.length;i++){
+            if(account[i].id==req.params.id){
+                res.status(201).send(account[i])
+                return
+            }
+        }
+    }else{
+        res.send('未找到指定id')
+    }
+})
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))
 exports.app =app
